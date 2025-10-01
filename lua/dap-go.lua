@@ -82,8 +82,15 @@ local function setup_delve_adapter(dap, config)
   }
 
   dap.adapters.go = function(callback, client_config)
+    config = vim.tbl_deep_extend("force", {}, delve_config)
+    if type(client_config.cwd) == "string" then
+      config.executable.cwd = client_config.cwd
+    elseif type(client_config.cwd) == "function" then
+      config.executable.cwd = client_config.cwd()
+    end
+
     if client_config.port == nil then
-      callback(delve_config)
+      callback(config)
       return
     end
 
@@ -93,10 +100,10 @@ local function setup_delve_adapter(dap, config)
     end
 
     local listener_addr = host .. ":" .. client_config.port
-    delve_config.port = client_config.port
-    delve_config.executable.args = { "dap", "-l", listener_addr }
+    config.port = client_config.port
+    config.executable.args = { "dap", "-l", listener_addr }
 
-    callback(delve_config)
+    callback(config)
   end
 end
 
